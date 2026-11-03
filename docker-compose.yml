@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  ml-forecasting-api:
+    build: .
+    container_name: pasokmataram_ml_api
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - REDIS_URL=redis://redis-cache:6379/0
+      - DATABASE_URL=postgresql://root:Tama123@postgres-db:5432/pasokmataram_db
+    restart: unless-stopped
+    depends_on:
+      - redis-cache
+
+  redis-cache:
+    image: redis:7-alpine
+    container_name: pasokmataram_ml_redis
+    ports:
+      - "6380:6379"
+    restart: unless-stopped
