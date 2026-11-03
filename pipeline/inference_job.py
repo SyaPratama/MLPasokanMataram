@@ -1,7 +1,7 @@
 """
 Batch Pre-computed Inference Job.
 Runs scheduled forecast generation (H+1 to H+7) using trained LightGBM models
-and publishes results directly into PasokMataram PostgreSQL database ('commodity_forecasts')
+and publishes results directly into PasokMataram API via HTTP REST
 and cache layer for sub-millisecond API serving.
 """
 

@@ -9,7 +9,7 @@ services:
     environment:
       - PORT=8000
       - REDIS_URL=redis://redis-cache:6379/0
-      - DATABASE_URL=postgresql://root:Tama123@postgres-db:5432/pasokmataram_db
+      - PASOK_API_URL=http://host.docker.internal:3000/api/v1/forecast
     restart: unless-stopped
     depends_on:
       - redis-cache

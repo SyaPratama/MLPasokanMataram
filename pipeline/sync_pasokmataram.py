@@ -20,6 +20,17 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
+try:
+    from dotenv import load_dotenv
+    env_file = os.getenv("ENV_FILE", ".env")
+    env_path = ROOT_DIR / env_file
+    if env_path.exists():
+        load_dotenv(env_path)
+    else:
+        load_dotenv(ROOT_DIR / ".env")
+except ImportError:
+    pass
+
 PASOK_API_BASE_URL = os.getenv("PASOK_API_URL", "http://localhost:3000/api/v1/forecast")
 
 COMMODITY_METADATA: Dict[str, Dict[str, Any]] = {

@@ -4,10 +4,24 @@ Production-ready Multi-Horizon Food Price Forecasting Service for PasokMataram D
 Complies with Model-as-a-Service (MaaS) Lifespan Pattern and Zero-Cost FOSS Mandate.
 """
 
+import os
+from pathlib import Path
 from contextlib import asynccontextmanager
 from typing import Dict, Any
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+
+try:
+    from dotenv import load_dotenv
+    root_dir = Path(__file__).resolve().parent.parent
+    env_file = os.getenv("ENV_FILE", ".env")
+    env_path = root_dir / env_file
+    if env_path.exists():
+        load_dotenv(env_path)
+    else:
+        load_dotenv(root_dir / ".env")
+except ImportError:
+    pass
 
 from app.schemas import (
     ForecastListResponse,
