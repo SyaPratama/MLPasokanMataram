@@ -1,0 +1,21 @@
+# ==============================================================================
+# PasokMataram ML Service - LiteSpeed / cPanel Python Configuration
+# ==============================================================================
+
+# 1. Matikan Directory Browsing
+Options -Indexes
+DirectoryIndex disabled
+
+# 2. Proteksi Berkas Sensitif & Lingkungan (.env, .git)
+<FilesMatch "^\.env|^\.git">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# 3. Phusion Passenger Python Application Directives
+<IfModule mod_passenger.c>
+    PassengerAppType python
+    PassengerStartupFile passenger_wsgi.py
+    PassengerAppRoot .
+    PassengerFriendlyErrorPages off
+</IfModule>

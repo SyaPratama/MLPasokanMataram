@@ -1,0 +1,185 @@
+name: Deploy ML Service to Shared Hosting
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ml-deploy-production
+  cancel-in-progress: false
+
+env:
+  PYTHON_VERSION: '3.11'
+  SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
+
+jobs:
+  build-and-package:
+    name: Build & Package ML Production Artifacts
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install system dependencies (OpenMP for LightGBM)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libgomp1
+
+      - name: Install dependencies and verify tests
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pytest test_forecast.py -v
+
+      - name: Package production ML artifacts (pure runtime, no raw data/venv)
+        run: |
+          mkdir -p ml-dist
+          cp -r app ml-dist/
+          cp -r models ml-dist/
+          cp passenger_wsgi.py ml-dist/
+          cp .htaccess ml-dist/
+          cp requirements.txt ml-dist/
+          if [ -n "${{ secrets.ENV_PRODUCTION }}" ]; then
+            echo "${{ secrets.ENV_PRODUCTION }}" > ml-dist/.env
+          fi
+          cd ml-dist
+          tar -czf ../ml-build.tar.gz .
+
+      - name: Upload ML build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ml-build
+          path: ml-build.tar.gz
+          retention-days: 7
+
+  deploy-to-hosting:
+    name: Deploy ML Service to Shared Hosting
+    runs-on: ubuntu-latest
+    needs: [build-and-package]
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Download ML build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ml-build
+
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
+
+      - name: Upload ML build to server
+        run: |
+          SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -o ConnectionAttempts=5 -o ServerAliveInterval=15 -o ServerAliveCountMax=3"
+          for i in 1 2 3; do
+            echo "Upload attempt $i of 3 on port ${{ env.SSH_PORT }}..."
+            if sshpass -p "${{ secrets.SSH_PASSWORD }}" scp -P "${{ env.SSH_PORT }}" $SSH_OPTS \
+              ml-build.tar.gz \
+              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/; then
+              echo "Upload succeeded."
+              exit 0
+            fi
+            echo "Upload attempt $i failed. Retrying in 5 seconds..."
+            sleep 5
+          done
+          echo "Upload failed after 3 attempts."
+          exit 255
+
+      - name: Extract ML build on server
+        run: |
+          cat << 'REMOTE_SCRIPT' > deploy-ml-remote.sh
+          set -e
+          ML_PATH="${{ secrets.ML_DEPLOY_PATH }}"
+
+          mkdir -p "$ML_PATH"
+          if [ -f "$ML_PATH/.htaccess" ]; then
+            cp "$ML_PATH/.htaccess" /tmp/preserved_ml_htaccess 2>/dev/null || true
+          fi
+
+          if [ -d "$ML_PATH" ]; then
+            cp -r "$ML_PATH" "${ML_PATH}_backup_$(date +%Y%m%d_%H%M%S)" 2>/dev/null || true
+            ls -dt ${ML_PATH}_backup_* 2>/dev/null | tail -n +3 | xargs rm -rf 2>/dev/null || true
+          fi
+
+          tar -xzf ~/ml-build.tar.gz -C "$ML_PATH" 2>/dev/null || true
+          rm -f ~/ml-build.tar.gz
+
+          if [ -f /tmp/preserved_ml_htaccess ]; then
+            if grep -q "CLOUDLINUX" /tmp/preserved_ml_htaccess 2>/dev/null; then
+              cat /tmp/preserved_ml_htaccess > "$ML_PATH/.htaccess"
+            fi
+            rm -f /tmp/preserved_ml_htaccess
+          fi
+
+          if ! grep -q "FilesMatch" "$ML_PATH/.htaccess" 2>/dev/null; then
+            echo "" >> "$ML_PATH/.htaccess"
+            echo "Options -Indexes" >> "$ML_PATH/.htaccess"
+            echo "DirectoryIndex disabled" >> "$ML_PATH/.htaccess"
+            echo '<FilesMatch "^\.env|^\.git">' >> "$ML_PATH/.htaccess"
+            echo "    Order allow,deny" >> "$ML_PATH/.htaccess"
+            echo "    Deny from all" >> "$ML_PATH/.htaccess"
+            echo "</FilesMatch>" >> "$ML_PATH/.htaccess"
+          fi
+
+          mkdir -p "$ML_PATH/tmp" && touch "$ML_PATH/tmp/restart.txt"
+          echo "ML Service deployed successfully with pure build artifacts and preserved .htaccess"
+          REMOTE_SCRIPT
+
+          SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -o ConnectionAttempts=5 -o ServerAliveInterval=15 -o ServerAliveCountMax=3"
+          for i in 1 2 3; do
+            echo "Deploy attempt $i of 3 on port ${{ env.SSH_PORT }}..."
+            if sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh -p "${{ env.SSH_PORT }}" $SSH_OPTS \
+              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "bash -l" < deploy-ml-remote.sh; then
+              echo "Deploy succeeded."
+              rm -f deploy-ml-remote.sh
+              exit 0
+            fi
+            echo "Deploy attempt $i failed. Retrying in 5 seconds..."
+            sleep 5
+          done
+          rm -f deploy-ml-remote.sh
+          echo "Deploy failed after 3 attempts."
+          exit 255
+
+      - name: Health check ML Service
+        run: |
+          sleep 10
+          if [ -n "${{ secrets.ML_URL }}" ]; then
+            curl --fail --silent --max-time 10 ${{ secrets.ML_URL }}/ || echo "ML health check skipped"
+          else
+            echo "ML_URL secret not configured. Health check skipped."
+          fi
+        continue-on-error: true
+
+  summary:
+    name: ML Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [deploy-to-hosting]
+    if: always() && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Generate deployment summary
+        run: |
+          echo "## Machine Learning Deployment Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Component | Status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| FastAPI ML Service (Shared Hosting) | ${{ needs.deploy-to-hosting.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Workflow: \`${{ github.workflow }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Commit: \`${{ github.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Actor: @${{ github.actor }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Port: ${{ env.SSH_PORT }}" >> "$GITHUB_STEP_SUMMARY"
