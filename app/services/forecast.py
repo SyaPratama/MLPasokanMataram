@@ -1,7 +1,7 @@
 """
 Forecast Service Module.
 Handles LightGBM inference, multi-horizon projection synthesis, risk assessment,
-and synchronization with PostgreSQL and Next.js API in PasokMataram DIY.
+and synchronization with Next.js REST API in PasokMataram DIY.
 """
 
 import os
