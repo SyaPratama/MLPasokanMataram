@@ -29,6 +29,10 @@ TARGET_COMMODITY_MAPPING = {
     "BERAS_PREMIUM_SLEMAN": "Beras Cap mentik wangi",
     "BAWANG_PUTIH_HONAN": "Bawang Putih Kating",
     "DAGING_AYAM_RAS": "Daging Ayam Ras",
+    "TELUR_AYAM_RAS": "Telur Ayam Ras",
+    "DAGING_SAPI_SEGAR": "Daging Sapi",
+    "SUSU_SAPI_MURNI": "Susu",
+    "TEMPE_KRAPYAK": "Tempe",
 }
 
 

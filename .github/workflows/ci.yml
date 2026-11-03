@@ -1,0 +1,82 @@
+name: Machine Learning Continuous Integration
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ml-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: '3.11'
+  CI: 'true'
+
+jobs:
+  test-and-validate:
+    name: Model Validation & Unit Tests
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install system dependencies (OpenMP for LightGBM)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libgomp1
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run forecast service unit tests
+        run: pytest test_forecast.py -v
+
+      - name: Evaluate model accuracy threshold (< 3.0% MAPE)
+        run: |
+          python -c "
+          import json
+          with open('models/model_metadata.json') as f:
+              meta = json.load(f)
+          metrics = meta.get('metrics', {})
+          print('Loaded metrics for', len(metrics), 'horizons')
+          for h, d in metrics.items():
+              mape = d.get('mape', 100.0)
+              print(f'{h}: MAPE = {mape:.2f}%')
+              assert mape < 3.0, f'MAPE for {h} is too high: {mape:.2f}%'
+          print('All model horizons meet accuracy criteria.')
+          "
+
+  ci-gate-summary:
+    name: ML CI Summary
+    runs-on: ubuntu-latest
+    needs: [test-and-validate]
+    if: always() && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Generate summary
+        run: |
+          echo "## Machine Learning CI Pipeline Status" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Check | Result |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Model Validation & Unit Tests | ${{ needs.test-and-validate.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Workflow: \`${{ github.workflow }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Commit: \`${{ github.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Actor: @${{ github.actor }}" >> "$GITHUB_STEP_SUMMARY"
