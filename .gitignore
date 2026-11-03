@@ -28,3 +28,11 @@ mlflow.db
 # OS files
 .DS_Store
 Thumbs.db
+
+# AI agent & specification artifacts
+.specify/
+specs/
+.zeroshot/
+.agents/
+.claude/
+.cursor/
