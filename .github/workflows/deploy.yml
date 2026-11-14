@@ -121,6 +121,11 @@ jobs:
           echo "Extracted files: $(ls -1 "$ML_PATH" | tr '\n' ' ')"
           echo "Passenger root listing: $(ls -ld "$ML_PATH" | awk '{print $1, $3, $4}')"
           command -v python3 >/dev/null 2>&1 && echo "python3: $(python3 -V 2>&1)" || echo "::warning::python3 not on PATH"
+          echo "Home entries: $(ls -1 "$HOME" 2>/dev/null | head -40 | tr '\n' ' ')"
+          echo "Docroots with passenger_wsgi.py: $(ls -1d "$HOME"/*/passenger_wsgi.py 2>/dev/null | tr '\n' ' ' || true)"
+          echo "Docroots with app/main.py: $(ls -1d "$HOME"/*/app/main.py 2>/dev/null | tr '\n' ' ' || true)"
+          stub_matches="$(grep -l "ml-forecasting-service" "$HOME"/*/passenger_wsgi.py "$HOME"/*/app/main.py 2>/dev/null | head -5 | tr '\n' ' ' || true)"
+          echo "Stub matches: ${stub_matches:-none}"
 
           if [ -f /tmp/preserved_ml_htaccess ]; then
             if grep -q "CLOUDLINUX" /tmp/preserved_ml_htaccess 2>/dev/null; then
