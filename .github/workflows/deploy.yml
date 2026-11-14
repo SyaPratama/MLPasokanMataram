@@ -126,6 +126,15 @@ jobs:
           echo "Docroots with app/main.py: $(ls -1d "$HOME"/*/app/main.py 2>/dev/null | tr '\n' ' ' || true)"
           stub_matches="$(grep -l "ml-forecasting-service" "$HOME"/*/passenger_wsgi.py "$HOME"/*/app/main.py 2>/dev/null | head -5 | tr '\n' ' ' || true)"
           echo "Stub matches: ${stub_matches:-none}"
+          echo "Virtualenvs: $(ls -1 "$HOME/virtualenv" 2>/dev/null | tr '\n' ' ' || true)"
+          candidate_python="$(ls -1d "$HOME"/virtualenv/api-predict/*/bin/python 2>/dev/null | head -1 || true)"
+          echo "Candidate python: ${candidate_python:-none}"
+          if [ -n "$candidate_python" ]; then
+            echo "Venv version: $("$candidate_python" -V 2>&1)"
+            import_probe="$("$candidate_python" -c "import sys; sys.path.insert(0, '$ML_PATH'); import app.main; print('import-ok')" 2>&1 | tail -5)"
+            echo "Import probe: $import_probe"
+          fi
+          echo "Env file present: $([ -f "$ML_PATH/.env" ] && echo yes || echo no)"
 
           if [ -f /tmp/preserved_ml_htaccess ]; then
             if grep -q "CLOUDLINUX" /tmp/preserved_ml_htaccess 2>/dev/null; then
