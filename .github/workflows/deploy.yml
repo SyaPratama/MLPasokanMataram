@@ -140,7 +140,13 @@ jobs:
             echo "Venv version: $("$candidate_python" -V 2>&1)"
             import_probe="$("$candidate_python" -c "import sys; sys.path.insert(0, '$ML_PATH'); import app.main; print('import-ok')" 2>&1 | tail -5)"
             echo "Import probe: $import_probe"
+            wsgi_probe="$("$candidate_python" -c "import sys; sys.path.insert(0, '$ML_PATH'); import passenger_wsgi; print('wsgi-ok')" 2>&1 | tail -5)"
+            echo "WSGI probe: $wsgi_probe"
+            cost_probe="$("$candidate_python" -c "import sys, time, resource; sys.path.insert(0, '$ML_PATH'); t=time.time(); import app.main; print('import_s', round(time.time()-t, 1), 'rss_mb', resource.getrusage(resource.RUSAGE_SELF).ru_maxrss//1024)" 2>&1 | tail -2)"
+            echo "Cost probe: $cost_probe"
           fi
+          echo "Tmp entries: $(ls -1 "$ML_PATH/tmp" 2>/dev/null | head -8 | tr '\n' ' ' || true)"
+          echo "Passenger log tail:"; tail -n 20 "$ML_PATH"/tmp/passenger*.log 2>/dev/null || echo "none"
           echo "Env file present: $([ -f "$ML_PATH/.env" ] && echo yes || echo no)"
 
           if [ -f /tmp/preserved_ml_htaccess ]; then
