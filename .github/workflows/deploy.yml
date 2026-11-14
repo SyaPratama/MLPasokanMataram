@@ -129,6 +129,13 @@ jobs:
           echo "Virtualenvs: $(ls -1 "$HOME/virtualenv" 2>/dev/null | tr '\n' ' ' || true)"
           candidate_python="$(ls -1d "$HOME"/virtualenv/api-predict/*/bin/python 2>/dev/null | head -1 || true)"
           echo "Candidate python: ${candidate_python:-none}"
+          venv_pip="$(ls -1d "$HOME"/virtualenv/api-predict/*/bin/pip 2>/dev/null | head -1 || true)"
+          if [ -n "$venv_pip" ]; then
+            echo "Installing requirements into api-predict venv"
+            "$venv_pip" install --quiet --no-input --disable-pip-version-check -r "$ML_PATH/requirements.txt"
+          else
+            echo "::warning::api-predict venv pip not found; skipping dependency install"
+          fi
           if [ -n "$candidate_python" ]; then
             echo "Venv version: $("$candidate_python" -V 2>&1)"
             import_probe="$("$candidate_python" -c "import sys; sys.path.insert(0, '$ML_PATH'); import app.main; print('import-ok')" 2>&1 | tail -5)"
