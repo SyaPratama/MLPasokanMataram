@@ -3,6 +3,7 @@ name: Machine Learning Docker Build & CD
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -17,7 +18,6 @@ jobs:
   build-and-verify-container:
     name: Build & Verify ML FastAPI Container
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
 
     steps:
       - name: Checkout repository
