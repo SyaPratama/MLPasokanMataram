@@ -44,14 +44,13 @@ def fetch_open_meteo_rainfall(start_date: str, end_date: str) -> Dict[str, float
     )
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "PasokMataram/1.0"})
-        with urllib.request.urlopen(req, timeout=15) as r:
-            data = json.loads(r.read())
+        with urllib.request.urlopen(req, timeout=15) as response:
+            data = json.loads(response.read())
             dates = data["daily"]["time"]
-            rains = [float(v) if v is not None else 0.0 for v in data["daily"]["precipitation_sum"]]
-            return dict(zip(dates, rains))
+            rainfall = [float(value) for value in data["daily"]["precipitation_sum"]]
+            return dict(zip(dates, rainfall))
     except Exception as exc:
-        print(f"[WARN] Open-Meteo fallback: {exc}")
-        return {}
+        raise RuntimeError("Real Open-Meteo rainfall history is unavailable") from exc
 
 
 def calculate_diy_exogenous_factors(dt_series: pd.Series) -> pd.DataFrame:
@@ -94,7 +93,7 @@ def collect_jogjakota_realtime_dataset(
     dan menggabungkannya dengan fitur cuaca & faktor pasar lokal DIY.
     """
     print(f"[START] Mengakses portal pangan resmi 'hargapangan.jogjakota.go.id'...")
-    client = httpx.Client(verify=False, timeout=25.0)
+    client = httpx.Client(timeout=25.0)
 
     try:
         client.get("https://hargapangan.jogjakota.go.id", headers={"User-Agent": "Mozilla/5.0"})
@@ -133,7 +132,6 @@ def collect_jogjakota_realtime_dataset(
 
     for comm in CORE_COMMODITIES:
         code = comm["code"]
-        base_price = comm["base_price"]
         info = matched_ids.get(code)
 
         series_dates = []
@@ -156,14 +154,10 @@ def collect_jogjakota_realtime_dataset(
             except Exception as e:
                 print(f"[WARN] Error fetching series for {code}: {e}")
 
-        # Fallback kalibrasi jika data histori portal sebagian kosong
-        if len(series_prices) < 10:
-            print(f"[FALLBACK] Mengisi deret waktu sintetis terkalibrasi untuk {code}...")
-            dates = pd.date_range(end=datetime.now(), periods=days_history)
-            series_dates = [d.strftime("%Y-%m-%d") for d in dates]
-            np.random.seed(abs(hash(code)) % (2**32))
-            walk = np.cumsum(np.random.randn(days_history) * (base_price * 0.006))
-            series_prices = [max(base_price * 0.6, base_price + w) for w in walk]
+        if len(series_prices) < 15:
+            raise RuntimeError(
+                f"At least 15 real price observations are required for {code}; found {len(series_prices)}"
+            )
 
         for d_str, p_val in zip(series_dates, series_prices):
             if d_str < earliest_date:
@@ -180,8 +174,12 @@ def collect_jogjakota_realtime_dataset(
     raw_df = pd.DataFrame(all_records).drop_duplicates(subset=["date", "commodity_code"])
     print(f"[WEATHER] Mengambil curah hujan Open-Meteo dari {earliest_date} s/d {latest_date}...")
     rainfall_dict = fetch_open_meteo_rainfall(earliest_date, latest_date)
-
-    raw_df["rainfall_mm"] = raw_df["date"].map(rainfall_dict).fillna(0.0).round(1)
+    raw_df["rainfall_mm"] = raw_df["date"].map(rainfall_dict)
+    if raw_df["rainfall_mm"].isna().any():
+        raise RuntimeError("Real rainfall history is incomplete for the collected market dates")
+    raw_df["rainfall_mm"] = raw_df["rainfall_mm"].round(1)
+    raw_df["price_source"] = "https://hargapangan.jogjakota.go.id"
+    raw_df["rainfall_source"] = "https://archive-api.open-meteo.com"
 
     # Tambahkan fitur eksogen Yogyakarta
     exo_df = calculate_diy_exogenous_factors(raw_df["date"])

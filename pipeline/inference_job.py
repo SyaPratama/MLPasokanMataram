@@ -52,8 +52,6 @@ def run_batch_inference_job() -> int:
             "commodity_id": f.commodity_id,
             "current_price": f.current_price,
             "predicted_price_7d": f.predicted_price_7d,
-            "predicted_price_30d": round(f.predicted_price_7d * 1.02, 0),
-            "predicted_price_90d": round(f.predicted_price_7d * 1.05, 0),
             "trend": f.trend,
             "trend_percentage": f.trend_percentage,
             "confidence_score": f.confidence_score,

@@ -22,6 +22,7 @@ from pipeline.feature_pipeline import FeaturePipeline
 from pipeline.sync_pasokmataram import load_integrated_training_dataset
 
 FEATURE_COLS = [
+    "current_price",
     "lag_1",
     "lag_2",
     "lag_7",

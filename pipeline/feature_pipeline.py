@@ -17,6 +17,7 @@ class FeaturePipeline:
         fitur normalisasi Z-score RapidMiner sebagai indikator risiko pasar.
         """
         df = df.sort_values("date").copy()
+        df["current_price"] = df["price"]
 
         # Lag harga historis
         df["lag_1"] = df["price"].shift(1)
@@ -42,15 +43,13 @@ class FeaturePipeline:
         df["sin_day"] = np.sin(2 * np.pi * df["day_of_week"] / 7)
         df["cos_day"] = np.cos(2 * np.pi * df["day_of_week"] / 7)
 
-        # Integrasi fitur normalisasi Z-score eksogen (Curah Hujan & Demand Shock)
         if "rainfall_mm" in df.columns:
-            # Jika belum dinormalisasi, lakukan Z-score standardisasi
             r_val = df["rainfall_mm"].astype(float)
-            if r_val.std() > 0:
-                rainfall_z = (r_val - r_val.mean()) / r_val.std()
-            else:
-                rainfall_z = r_val * 0.0
-            df["rainfall_zscore"] = rainfall_z
+            r_mean = r_val.expanding(min_periods=2).mean().shift(1)
+            r_std = r_val.expanding(min_periods=2).std().shift(1)
+            df["rainfall_zscore"] = (
+                (r_val - r_mean) / r_std.replace(0.0, np.nan)
+            ).replace([np.inf, -np.inf], np.nan).fillna(0.0)
             df["rolling_rainfall_3d"] = r_val.rolling(window=3, min_periods=1).sum()
         else:
             df["rainfall_zscore"] = 0.0
@@ -58,11 +57,11 @@ class FeaturePipeline:
 
         if "demand_shock_score" in df.columns:
             d_val = df["demand_shock_score"].astype(float)
-            if d_val.std() > 0:
-                demand_z = (d_val - d_val.mean()) / d_val.std()
-            else:
-                demand_z = d_val * 0.0
-            df["demand_shock_zscore"] = demand_z
+            d_mean = d_val.expanding(min_periods=2).mean().shift(1)
+            d_std = d_val.expanding(min_periods=2).std().shift(1)
+            df["demand_shock_zscore"] = (
+                (d_val - d_mean) / d_std.replace(0.0, np.nan)
+            ).replace([np.inf, -np.inf], np.nan).fillna(0.0)
         else:
             df["demand_shock_zscore"] = 0.0
 

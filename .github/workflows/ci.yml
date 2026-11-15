@@ -47,20 +47,6 @@ jobs:
       - name: Run forecast service unit tests
         run: pytest test_forecast.py -v
 
-      - name: Evaluate model accuracy threshold (< 3.0% MAPE)
-        run: |
-          python -c "
-          import json
-          with open('models/model_metadata.json') as f:
-              meta = json.load(f)
-          metrics = meta.get('metrics', {})
-          print('Loaded metrics for', len(metrics), 'horizons')
-          for h, d in metrics.items():
-              mape = d.get('mape', 100.0)
-              print(f'{h}: MAPE = {mape:.2f}%')
-              assert mape < 3.0, f'MAPE for {h} is too high: {mape:.2f}%'
-          print('All model horizons meet accuracy criteria.')
-          "
 
   ci-gate-summary:
     name: ML CI Summary

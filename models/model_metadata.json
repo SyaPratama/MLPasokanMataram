@@ -1,6 +1,10 @@
 {
-  "algorithm": "LightGBM Direct Multi-Horizon v1.3 (Risk-Adjusted)",
+  "algorithm": "LightGBM per-commodity direct multi-horizon",
+  "model_contract": "one_model_per_commodity_per_horizon",
+  "artifact_pattern": "{commodity_code}_horizon_{horizon}.pkl",
+  "model_count": 70,
   "features": [
+    "current_price",
     "lag_1",
     "lag_2",
     "lag_7",
@@ -18,42 +22,812 @@
     "demand_shock_zscore",
     "composite_risk_index"
   ],
+  "evaluation": {
+    "method": "time_ordered_holdout",
+    "holdout_fraction": 0.2,
+    "horizon_purge": true,
+    "artifact_fit": "all_available_rows_after_holdout_evaluation"
+  },
+  "data_source": "pipeline/data_training.csv",
+  "price_sources": [
+    "https://hargapangan.jogjakota.go.id"
+  ],
+  "rainfall_sources": [
+    "https://archive-api.open-meteo.com"
+  ],
+  "history_start": "2026-05-20",
+  "history_end": "2026-11-15",
   "metrics": {
-    "h1": {
-      "mape": 1.7356602472847247,
-      "p10": -415.68323755300514,
-      "p90": 508.19892989431736
+    "BAWANG_MERAH": {
+      "h1": {
+        "holdout_mape": 5.469457066309396,
+        "residual_p10": -649.1689647931453,
+        "residual_p90": 2488.0377545872598,
+        "interval_coverage": 0.7777777777777778,
+        "training_observations": 142,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-09",
+        "holdout_start": "2026-10-10",
+        "holdout_end": "2026-11-15"
+      },
+      "h2": {
+        "holdout_mape": 4.999681683931482,
+        "residual_p10": -61.0860563672486,
+        "residual_p90": 2790.6497848555264,
+        "interval_coverage": 0.7777777777777778,
+        "training_observations": 140,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-08",
+        "holdout_start": "2026-10-09",
+        "holdout_end": "2026-11-15"
+      },
+      "h3": {
+        "holdout_mape": 6.852199715693866,
+        "residual_p10": 874.5096002036134,
+        "residual_p90": 3439.5994397022896,
+        "interval_coverage": 0.7777777777777778,
+        "training_observations": 138,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-07",
+        "holdout_start": "2026-10-08",
+        "holdout_end": "2026-11-15"
+      },
+      "h4": {
+        "holdout_mape": 9.560493471362138,
+        "residual_p10": 921.7900599301265,
+        "residual_p90": 3883.28548307691,
+        "interval_coverage": 0.7777777777777778,
+        "training_observations": 136,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-06",
+        "holdout_start": "2026-10-07",
+        "holdout_end": "2026-11-15"
+      },
+      "h5": {
+        "holdout_mape": 9.925535146331486,
+        "residual_p10": 874.3086541265045,
+        "residual_p90": 3957.6276336017954,
+        "interval_coverage": 0.7714285714285715,
+        "training_observations": 135,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-06",
+        "holdout_start": "2026-10-07",
+        "holdout_end": "2026-11-15"
+      },
+      "h6": {
+        "holdout_mape": 9.302365800654773,
+        "residual_p10": 926.1469237465142,
+        "residual_p90": 4178.873545855854,
+        "interval_coverage": 0.7714285714285715,
+        "training_observations": 133,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-05",
+        "holdout_start": "2026-10-06",
+        "holdout_end": "2026-11-15"
+      },
+      "h7": {
+        "holdout_mape": 8.171304186590321,
+        "residual_p10": 890.138401794435,
+        "residual_p90": 3946.028265781623,
+        "interval_coverage": 0.7714285714285715,
+        "training_observations": 131,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-04",
+        "holdout_start": "2026-10-05",
+        "holdout_end": "2026-11-15"
+      }
     },
-    "h2": {
-      "mape": 1.943070972134063,
-      "p10": -701.0564459579617,
-      "p90": 676.8738825862232
+    "BAWANG_PUTIH_HONAN": {
+      "h1": {
+        "holdout_mape": 0.13416060644043695,
+        "residual_p10": -129.68396214274253,
+        "residual_p90": 11.867726817174116,
+        "interval_coverage": 0.7777777777777778,
+        "training_observations": 142,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-09",
+        "holdout_start": "2026-10-10",
+        "holdout_end": "2026-11-15"
+      },
+      "h2": {
+        "holdout_mape": 0.012407871684301963,
+        "residual_p10": -7.251773738309566,
+        "residual_p90": 3.455762228342792,
+        "interval_coverage": 0.8333333333333334,
+        "training_observations": 140,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-08",
+        "holdout_start": "2026-10-09",
+        "holdout_end": "2026-11-15"
+      },
+      "h3": {
+        "holdout_mape": 0.007985056736187185,
+        "residual_p10": 2.8746204250273877,
+        "residual_p90": 2.8746204250273877,
+        "interval_coverage": 1.0,
+        "training_observations": 138,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-07",
+        "holdout_start": "2026-10-08",
+        "holdout_end": "2026-11-15"
+      },
+      "h4": {
+        "holdout_mape": 0.048520672509607995,
+        "residual_p10": 1.3062210271782533,
+        "residual_p90": 70.80260457801705,
+        "interval_coverage": 0.7777777777777778,
+        "training_observations": 136,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-06",
+        "holdout_start": "2026-10-07",
+        "holdout_end": "2026-11-15"
+      },
+      "h5": {
+        "holdout_mape": 0.0071498610993027505,
+        "residual_p10": 2.5739499957489897,
+        "residual_p90": 2.5739499957489897,
+        "interval_coverage": 1.0,
+        "training_observations": 135,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-06",
+        "holdout_start": "2026-10-07",
+        "holdout_end": "2026-11-15"
+      },
+      "h6": {
+        "holdout_mape": 0.018636244071646598,
+        "residual_p10": 2.370472717533994,
+        "residual_p90": 10.846777944476344,
+        "interval_coverage": 0.8,
+        "training_observations": 133,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-05",
+        "holdout_start": "2026-10-06",
+        "holdout_end": "2026-11-15"
+      },
+      "h7": {
+        "holdout_mape": 0.04322782000906348,
+        "residual_p10": 2.0145522420862108,
+        "residual_p90": 29.24198803323234,
+        "interval_coverage": 0.7714285714285715,
+        "training_observations": 131,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-04",
+        "holdout_start": "2026-10-05",
+        "holdout_end": "2026-11-15"
+      }
     },
-    "h3": {
-      "mape": 2.0441306851714343,
-      "p10": -859.1104645118487,
-      "p90": 794.8145110910555
+    "BERAS_PREMIUM_SLEMAN": {
+      "h1": {
+        "holdout_mape": 0.8202833706189412,
+        "residual_p10": 0.0,
+        "residual_p90": 400.0,
+        "interval_coverage": 1.0,
+        "training_observations": 142,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-09",
+        "holdout_start": "2026-10-10",
+        "holdout_end": "2026-11-15"
+      },
+      "h2": {
+        "holdout_mape": 0.8202833706189412,
+        "residual_p10": 0.0,
+        "residual_p90": 400.0,
+        "interval_coverage": 1.0,
+        "training_observations": 140,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-08",
+        "holdout_start": "2026-10-09",
+        "holdout_end": "2026-11-15"
+      },
+      "h3": {
+        "holdout_mape": 0.8202833706189412,
+        "residual_p10": 0.0,
+        "residual_p90": 400.0,
+        "interval_coverage": 1.0,
+        "training_observations": 138,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-07",
+        "holdout_start": "2026-10-08",
+        "holdout_end": "2026-11-15"
+      },
+      "h4": {
+        "holdout_mape": 0.8202833706189412,
+        "residual_p10": 0.0,
+        "residual_p90": 400.0,
+        "interval_coverage": 1.0,
+        "training_observations": 136,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-06",
+        "holdout_start": "2026-10-07",
+        "holdout_end": "2026-11-15"
+      },
+      "h5": {
+        "holdout_mape": 0.8437200383509109,
+        "residual_p10": 0.0,
+        "residual_p90": 400.0,
+        "interval_coverage": 1.0,
+        "training_observations": 135,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-06",
+        "holdout_start": "2026-10-07",
+        "holdout_end": "2026-11-15"
+      },
+      "h6": {
+        "holdout_mape": 0.8437200383509109,
+        "residual_p10": 0.0,
+        "residual_p90": 400.0,
+        "interval_coverage": 1.0,
+        "training_observations": 133,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-05",
+        "holdout_start": "2026-10-06",
+        "holdout_end": "2026-11-15"
+      },
+      "h7": {
+        "holdout_mape": 0.8437200383509109,
+        "residual_p10": 0.0,
+        "residual_p90": 400.0,
+        "interval_coverage": 1.0,
+        "training_observations": 131,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-04",
+        "holdout_start": "2026-10-05",
+        "holdout_end": "2026-11-15"
+      }
     },
-    "h4": {
-      "mape": 2.193233762928417,
-      "p10": -927.5709473485076,
-      "p90": 933.6540108522704
+    "CABAI_MERAH_KERITING": {
+      "h1": {
+        "holdout_mape": 6.947814202251203,
+        "residual_p10": -2423.2476859872404,
+        "residual_p90": 7475.305429570461,
+        "interval_coverage": 0.8055555555555556,
+        "training_observations": 142,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-09",
+        "holdout_start": "2026-10-10",
+        "holdout_end": "2026-11-15"
+      },
+      "h2": {
+        "holdout_mape": 11.200916921703632,
+        "residual_p10": -241.0375508872712,
+        "residual_p90": 10999.274272460141,
+        "interval_coverage": 0.7777777777777778,
+        "training_observations": 140,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-08",
+        "holdout_start": "2026-10-09",
+        "holdout_end": "2026-11-15"
+      },
+      "h3": {
+        "holdout_mape": 17.639177230203703,
+        "residual_p10": 4447.843576833326,
+        "residual_p90": 16169.737589864675,
+        "interval_coverage": 0.7777777777777778,
+        "training_observations": 138,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-07",
+        "holdout_start": "2026-10-08",
+        "holdout_end": "2026-11-15"
+      },
+      "h4": {
+        "holdout_mape": 27.60257241026854,
+        "residual_p10": 10046.831087769613,
+        "residual_p90": 26835.519732353147,
+        "interval_coverage": 0.7777777777777778,
+        "training_observations": 136,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-06",
+        "holdout_start": "2026-10-07",
+        "holdout_end": "2026-11-15"
+      },
+      "h5": {
+        "holdout_mape": 31.156372045227716,
+        "residual_p10": 10222.11917521485,
+        "residual_p90": 31364.328380459538,
+        "interval_coverage": 0.7714285714285715,
+        "training_observations": 135,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-06",
+        "holdout_start": "2026-10-07",
+        "holdout_end": "2026-11-15"
+      },
+      "h6": {
+        "holdout_mape": 29.088018977935903,
+        "residual_p10": 9089.931460746258,
+        "residual_p90": 31957.366852042735,
+        "interval_coverage": 0.7714285714285715,
+        "training_observations": 133,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-05",
+        "holdout_start": "2026-10-06",
+        "holdout_end": "2026-11-15"
+      },
+      "h7": {
+        "holdout_mape": 28.50555943861568,
+        "residual_p10": 8707.0832806844,
+        "residual_p90": 28808.32417644983,
+        "interval_coverage": 0.7714285714285715,
+        "training_observations": 131,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-04",
+        "holdout_start": "2026-10-05",
+        "holdout_end": "2026-11-15"
+      }
     },
-    "h5": {
-      "mape": 2.3185812618842174,
-      "p10": -975.6510173954069,
-      "p90": 956.3397962043418
+    "CABAI_RAWIT_MERAH": {
+      "h1": {
+        "holdout_mape": 4.97681359137752,
+        "residual_p10": -4805.099385946378,
+        "residual_p90": 2863.6239144595856,
+        "interval_coverage": 0.7777777777777778,
+        "training_observations": 142,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-09",
+        "holdout_start": "2026-10-10",
+        "holdout_end": "2026-11-15"
+      },
+      "h2": {
+        "holdout_mape": 8.18591428793178,
+        "residual_p10": -7830.439998768834,
+        "residual_p90": 476.68995071596146,
+        "interval_coverage": 0.7777777777777778,
+        "training_observations": 140,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-08",
+        "holdout_start": "2026-10-09",
+        "holdout_end": "2026-11-15"
+      },
+      "h3": {
+        "holdout_mape": 6.758875496116171,
+        "residual_p10": -7803.5216325277,
+        "residual_p90": 2081.8762317556757,
+        "interval_coverage": 0.7777777777777778,
+        "training_observations": 138,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-07",
+        "holdout_start": "2026-10-08",
+        "holdout_end": "2026-11-15"
+      },
+      "h4": {
+        "holdout_mape": 5.387243180135761,
+        "residual_p10": -6661.323523244875,
+        "residual_p90": 1984.1678690798144,
+        "interval_coverage": 0.7777777777777778,
+        "training_observations": 136,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-06",
+        "holdout_start": "2026-10-07",
+        "holdout_end": "2026-11-15"
+      },
+      "h5": {
+        "holdout_mape": 10.4541941840138,
+        "residual_p10": -7441.781920505903,
+        "residual_p90": 10456.989232891312,
+        "interval_coverage": 0.7714285714285715,
+        "training_observations": 135,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-06",
+        "holdout_start": "2026-10-07",
+        "holdout_end": "2026-11-15"
+      },
+      "h6": {
+        "holdout_mape": 6.056371854864706,
+        "residual_p10": -7812.900542322814,
+        "residual_p90": 3828.782441330118,
+        "interval_coverage": 0.7714285714285715,
+        "training_observations": 133,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-05",
+        "holdout_start": "2026-10-06",
+        "holdout_end": "2026-11-15"
+      },
+      "h7": {
+        "holdout_mape": 9.19491370623986,
+        "residual_p10": -8834.228574187353,
+        "residual_p90": 3978.2866439489358,
+        "interval_coverage": 0.7714285714285715,
+        "training_observations": 131,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-04",
+        "holdout_start": "2026-10-05",
+        "holdout_end": "2026-11-15"
+      }
     },
-    "h6": {
-      "mape": 2.412405863567515,
-      "p10": -1073.6796825280558,
-      "p90": 1007.6723961586594
+    "DAGING_AYAM_RAS": {
+      "h1": {
+        "holdout_mape": 1.7411488615349358,
+        "residual_p10": -1124.2221383617107,
+        "residual_p90": 129.17621901347593,
+        "interval_coverage": 0.7777777777777778,
+        "training_observations": 142,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-09",
+        "holdout_start": "2026-10-10",
+        "holdout_end": "2026-11-15"
+      },
+      "h2": {
+        "holdout_mape": 2.6592692201906645,
+        "residual_p10": -1740.4296718641963,
+        "residual_p90": -102.35688925328941,
+        "interval_coverage": 0.7777777777777778,
+        "training_observations": 140,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-08",
+        "holdout_start": "2026-10-09",
+        "holdout_end": "2026-11-15"
+      },
+      "h3": {
+        "holdout_mape": 3.3148707110948883,
+        "residual_p10": -2124.154680517415,
+        "residual_p90": -261.4658498639583,
+        "interval_coverage": 0.7777777777777778,
+        "training_observations": 138,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-07",
+        "holdout_start": "2026-10-08",
+        "holdout_end": "2026-11-15"
+      },
+      "h4": {
+        "holdout_mape": 4.362409392559455,
+        "residual_p10": -2596.037804868105,
+        "residual_p90": -714.0423276583169,
+        "interval_coverage": 0.7777777777777778,
+        "training_observations": 136,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-06",
+        "holdout_start": "2026-10-07",
+        "holdout_end": "2026-11-15"
+      },
+      "h5": {
+        "holdout_mape": 7.356283094300769,
+        "residual_p10": -3818.679251582568,
+        "residual_p90": -1576.994055803798,
+        "interval_coverage": 0.7714285714285715,
+        "training_observations": 135,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-06",
+        "holdout_start": "2026-10-07",
+        "holdout_end": "2026-11-15"
+      },
+      "h6": {
+        "holdout_mape": 5.8952199641722425,
+        "residual_p10": -3577.0581993250426,
+        "residual_p90": -571.3610576955645,
+        "interval_coverage": 0.7714285714285715,
+        "training_observations": 133,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-05",
+        "holdout_start": "2026-10-06",
+        "holdout_end": "2026-11-15"
+      },
+      "h7": {
+        "holdout_mape": 5.876142436910407,
+        "residual_p10": -3155.7442878584916,
+        "residual_p90": -877.1356504451011,
+        "interval_coverage": 0.7714285714285715,
+        "training_observations": 131,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-04",
+        "holdout_start": "2026-10-05",
+        "holdout_end": "2026-11-15"
+      }
     },
-    "h7": {
-      "mape": 2.516910495673257,
-      "p10": -1137.7380592206973,
-      "p90": 999.4413330967153
+    "DAGING_SAPI_SEGAR": {
+      "h1": {
+        "holdout_mape": 0.041346299034355244,
+        "residual_p10": 4.090011094172951,
+        "residual_p90": 159.09360512101557,
+        "interval_coverage": 0.7777777777777778,
+        "training_observations": 142,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-09",
+        "holdout_start": "2026-10-10",
+        "holdout_end": "2026-11-15"
+      },
+      "h2": {
+        "holdout_mape": 0.11536325542103498,
+        "residual_p10": 9.231476357817883,
+        "residual_p90": 317.96260007038654,
+        "interval_coverage": 0.7777777777777778,
+        "training_observations": 140,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-08",
+        "holdout_start": "2026-10-09",
+        "holdout_end": "2026-11-15"
+      },
+      "h3": {
+        "holdout_mape": 0.18388949548853534,
+        "residual_p10": -29.11816360388184,
+        "residual_p90": 756.1946009514213,
+        "interval_coverage": 0.7777777777777778,
+        "training_observations": 138,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-07",
+        "holdout_start": "2026-10-08",
+        "holdout_end": "2026-11-15"
+      },
+      "h4": {
+        "holdout_mape": 0.03252626364433619,
+        "residual_p10": -35.23944743067841,
+        "residual_p90": 138.17866822840006,
+        "interval_coverage": 0.8055555555555556,
+        "training_observations": 136,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-06",
+        "holdout_start": "2026-10-07",
+        "holdout_end": "2026-11-15"
+      },
+      "h5": {
+        "holdout_mape": 0.04973732946071597,
+        "residual_p10": -142.38741584384695,
+        "residual_p90": 14.573535765806447,
+        "interval_coverage": 0.7714285714285715,
+        "training_observations": 135,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-06",
+        "holdout_start": "2026-10-07",
+        "holdout_end": "2026-11-15"
+      },
+      "h6": {
+        "holdout_mape": 0.049955389187240504,
+        "residual_p10": -125.24319278533221,
+        "residual_p90": 85.49455073042773,
+        "interval_coverage": 0.8,
+        "training_observations": 133,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-05",
+        "holdout_start": "2026-10-06",
+        "holdout_end": "2026-11-15"
+      },
+      "h7": {
+        "holdout_mape": 0.04453403652407772,
+        "residual_p10": -125.48095861871843,
+        "residual_p90": 91.93259450666956,
+        "interval_coverage": 0.8571428571428571,
+        "training_observations": 131,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-04",
+        "holdout_start": "2026-10-05",
+        "holdout_end": "2026-11-15"
+      }
+    },
+    "SUSU_SAPI_MURNI": {
+      "h1": {
+        "holdout_mape": 0.0,
+        "residual_p10": 0.0,
+        "residual_p90": 0.0,
+        "interval_coverage": 1.0,
+        "training_observations": 142,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-09",
+        "holdout_start": "2026-10-10",
+        "holdout_end": "2026-11-15"
+      },
+      "h2": {
+        "holdout_mape": 0.0,
+        "residual_p10": 0.0,
+        "residual_p90": 0.0,
+        "interval_coverage": 1.0,
+        "training_observations": 140,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-08",
+        "holdout_start": "2026-10-09",
+        "holdout_end": "2026-11-15"
+      },
+      "h3": {
+        "holdout_mape": 0.0,
+        "residual_p10": 0.0,
+        "residual_p90": 0.0,
+        "interval_coverage": 1.0,
+        "training_observations": 138,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-07",
+        "holdout_start": "2026-10-08",
+        "holdout_end": "2026-11-15"
+      },
+      "h4": {
+        "holdout_mape": 0.0,
+        "residual_p10": 0.0,
+        "residual_p90": 0.0,
+        "interval_coverage": 1.0,
+        "training_observations": 136,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-06",
+        "holdout_start": "2026-10-07",
+        "holdout_end": "2026-11-15"
+      },
+      "h5": {
+        "holdout_mape": 0.0,
+        "residual_p10": 0.0,
+        "residual_p90": 0.0,
+        "interval_coverage": 1.0,
+        "training_observations": 135,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-06",
+        "holdout_start": "2026-10-07",
+        "holdout_end": "2026-11-15"
+      },
+      "h6": {
+        "holdout_mape": 0.0,
+        "residual_p10": 0.0,
+        "residual_p90": 0.0,
+        "interval_coverage": 1.0,
+        "training_observations": 133,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-05",
+        "holdout_start": "2026-10-06",
+        "holdout_end": "2026-11-15"
+      },
+      "h7": {
+        "holdout_mape": 0.0,
+        "residual_p10": 0.0,
+        "residual_p90": 0.0,
+        "interval_coverage": 1.0,
+        "training_observations": 131,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-04",
+        "holdout_start": "2026-10-05",
+        "holdout_end": "2026-11-15"
+      }
+    },
+    "TELUR_AYAM_RAS": {
+      "h1": {
+        "holdout_mape": 0.4324395242397699,
+        "residual_p10": -225.06797559808547,
+        "residual_p90": 29.604195452526255,
+        "interval_coverage": 0.7777777777777778,
+        "training_observations": 142,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-09",
+        "holdout_start": "2026-10-10",
+        "holdout_end": "2026-11-15"
+      },
+      "h2": {
+        "holdout_mape": 0.6405311783390387,
+        "residual_p10": -462.14497501323604,
+        "residual_p90": 3.92455683229673,
+        "interval_coverage": 0.7777777777777778,
+        "training_observations": 140,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-08",
+        "holdout_start": "2026-10-09",
+        "holdout_end": "2026-11-15"
+      },
+      "h3": {
+        "holdout_mape": 1.3876304204214287,
+        "residual_p10": -819.8778208849471,
+        "residual_p90": 121.71763697155984,
+        "interval_coverage": 0.7777777777777778,
+        "training_observations": 138,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-07",
+        "holdout_start": "2026-10-08",
+        "holdout_end": "2026-11-15"
+      },
+      "h4": {
+        "holdout_mape": 1.4176968196281472,
+        "residual_p10": -1001.2988313791848,
+        "residual_p90": 82.68149106879355,
+        "interval_coverage": 0.7777777777777778,
+        "training_observations": 136,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-06",
+        "holdout_start": "2026-10-07",
+        "holdout_end": "2026-11-15"
+      },
+      "h5": {
+        "holdout_mape": 1.5582679681996272,
+        "residual_p10": -995.2892439154457,
+        "residual_p90": 19.665054007196165,
+        "interval_coverage": 0.7714285714285715,
+        "training_observations": 135,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-06",
+        "holdout_start": "2026-10-07",
+        "holdout_end": "2026-11-15"
+      },
+      "h6": {
+        "holdout_mape": 1.786257399875908,
+        "residual_p10": -1167.975684515611,
+        "residual_p90": 3.688714326614721,
+        "interval_coverage": 0.7714285714285715,
+        "training_observations": 133,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-05",
+        "holdout_start": "2026-10-06",
+        "holdout_end": "2026-11-15"
+      },
+      "h7": {
+        "holdout_mape": 1.5625196795245073,
+        "residual_p10": -996.1282373016736,
+        "residual_p90": 31.468463853300648,
+        "interval_coverage": 0.7714285714285715,
+        "training_observations": 131,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-04",
+        "holdout_start": "2026-10-05",
+        "holdout_end": "2026-11-15"
+      }
+    },
+    "TEMPE_KRAPYAK": {
+      "h1": {
+        "holdout_mape": 0.0,
+        "residual_p10": 0.0,
+        "residual_p90": 0.0,
+        "interval_coverage": 1.0,
+        "training_observations": 142,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-09",
+        "holdout_start": "2026-10-10",
+        "holdout_end": "2026-11-15"
+      },
+      "h2": {
+        "holdout_mape": 0.0,
+        "residual_p10": 0.0,
+        "residual_p90": 0.0,
+        "interval_coverage": 1.0,
+        "training_observations": 140,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-08",
+        "holdout_start": "2026-10-09",
+        "holdout_end": "2026-11-15"
+      },
+      "h3": {
+        "holdout_mape": 0.0,
+        "residual_p10": 0.0,
+        "residual_p90": 0.0,
+        "interval_coverage": 1.0,
+        "training_observations": 138,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-07",
+        "holdout_start": "2026-10-08",
+        "holdout_end": "2026-11-15"
+      },
+      "h4": {
+        "holdout_mape": 0.0,
+        "residual_p10": 0.0,
+        "residual_p90": 0.0,
+        "interval_coverage": 1.0,
+        "training_observations": 136,
+        "holdout_observations": 36,
+        "training_target_end": "2026-10-06",
+        "holdout_start": "2026-10-07",
+        "holdout_end": "2026-11-15"
+      },
+      "h5": {
+        "holdout_mape": 0.0,
+        "residual_p10": 0.0,
+        "residual_p90": 0.0,
+        "interval_coverage": 1.0,
+        "training_observations": 135,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-06",
+        "holdout_start": "2026-10-07",
+        "holdout_end": "2026-11-15"
+      },
+      "h6": {
+        "holdout_mape": 0.0,
+        "residual_p10": 0.0,
+        "residual_p90": 0.0,
+        "interval_coverage": 1.0,
+        "training_observations": 133,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-05",
+        "holdout_start": "2026-10-06",
+        "holdout_end": "2026-11-15"
+      },
+      "h7": {
+        "holdout_mape": 0.0,
+        "residual_p10": 0.0,
+        "residual_p90": 0.0,
+        "interval_coverage": 1.0,
+        "training_observations": 131,
+        "holdout_observations": 35,
+        "training_target_end": "2026-10-04",
+        "holdout_start": "2026-10-05",
+        "holdout_end": "2026-11-15"
+      }
     }
   },
-  "trained_at": "2026-11-03T12:41:58.926977"
+  "trained_at": "2026-11-15T06:50:53.303370+00:00"
 }

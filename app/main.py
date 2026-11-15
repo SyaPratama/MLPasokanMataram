@@ -8,8 +8,9 @@ import os
 from pathlib import Path
 from contextlib import asynccontextmanager
 from typing import Dict, Any
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 try:
     from dotenv import load_dotenv
@@ -28,7 +29,7 @@ from app.schemas import (
     CommodityForecastResponse,
     SimulationRequest,
 )
-from app.services.forecast import ForecastService
+from app.services.forecast import ForecastService, ForecastUnavailableError, UnsupportedScenarioError
 
 ml_models: Dict[str, Any] = {}
 
@@ -36,7 +37,7 @@ ml_models: Dict[str, Any] = {}
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     ml_models["status"] = "loaded"
-    ml_models["service"] = ForecastService(models=ml_models)
+    ml_models["service"] = ForecastService()
     yield
     ml_models.clear()
 
@@ -57,6 +58,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.exception_handler(ForecastUnavailableError)
+async def forecast_unavailable(_request: Request, exc: ForecastUnavailableError):
+    return JSONResponse(status_code=503, content={"detail": str(exc)})
+
+
+@app.exception_handler(UnsupportedScenarioError)
+async def unsupported_scenario(_request: Request, exc: UnsupportedScenarioError):
+    return JSONResponse(status_code=422, content={"detail": str(exc)})
 
 
 @app.get("/", tags=["Health"])

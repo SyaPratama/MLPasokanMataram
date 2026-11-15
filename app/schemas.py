@@ -32,7 +32,9 @@ class WeatherImpact(BaseModel):
 
 class ModelMetadata(BaseModel):
     algorithm: str
-    mape_accuracy: float
+    mape_accuracy: float = Field(..., description="MAPE H+7 dari holdout berurutan waktu")
+    evaluation_method: Literal["time_ordered_holdout"]
+    holdout_observations: int = Field(..., gt=0)
     last_trained: str
     horizon_days: int = 7
 
@@ -64,6 +66,10 @@ class ForecastListResponse(BaseModel):
 
 class SimulationRequest(BaseModel):
     commodity_code: str
-    current_price: float
-    rainfall_anomaly_percent: float = Field(0.0, description="Simulasi kenaikan/penurunan curah hujan (%)")
+    current_price: float = Field(..., gt=0)
+    rainfall_anomaly_percent: float = Field(
+        0.0,
+        ge=-100.0,
+        description="Simulasi kenaikan/penurunan curah hujan (%)",
+    )
     fuel_price_hike_percent: float = Field(0.0, description="Simulasi kenaikan biaya logistik/solar (%)")
