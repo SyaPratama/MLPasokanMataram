@@ -35,3 +35,4 @@ specs/
 .agents/
 .claude/
 .cursor/
+graphify-out/

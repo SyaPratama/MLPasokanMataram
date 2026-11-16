@@ -1,8 +1,6 @@
 name: Deploy ML Service to Shared Hosting
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -78,25 +76,33 @@ jobs:
         with:
           name: ml-build
 
-      - name: Install sshpass
-        run: sudo apt-get update && sudo apt-get install -y sshpass
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          test -n "$SSH_PRIVATE_KEY" || { echo "::error::SSH_PRIVATE_KEY secret not configured"; exit 1; }
+          test -n "$SSH_KNOWN_HOSTS" || { echo "::error::SSH_KNOWN_HOSTS secret not configured"; exit 1; }
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$HOME/.ssh/deploy_key"
+          chmod 600 "$HOME/.ssh/deploy_key"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
 
       - name: Upload ML build to server
         run: |
-          SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -o ConnectionAttempts=5 -o ServerAliveInterval=15 -o ServerAliveCountMax=3"
-          for i in 1 2 3; do
-            echo "Upload attempt $i of 3 on port ${{ env.SSH_PORT }}..."
-            if sshpass -p "${{ secrets.SSH_PASSWORD }}" scp -P "${{ env.SSH_PORT }}" $SSH_OPTS \
-              ml-build.tar.gz \
-              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/; then
-              echo "Upload succeeded."
-              exit 0
-            fi
-            echo "Upload attempt $i failed. Retrying in 5 seconds..."
-            sleep 5
-          done
-          echo "Upload failed after 3 attempts."
-          exit 255
+          SSH_OPTS=(
+            -i "$HOME/.ssh/deploy_key"
+            -o IdentitiesOnly=yes
+            -o StrictHostKeyChecking=yes
+            -o UserKnownHostsFile="$HOME/.ssh/known_hosts"
+            -o ConnectTimeout=30
+            -o ServerAliveInterval=15
+            -o ServerAliveCountMax=3
+          )
+          scp -P "${{ env.SSH_PORT }}" "${SSH_OPTS[@]}" \
+            ml-build.tar.gz \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/"
 
       - name: Extract ML build on server
         run: |
@@ -183,8 +189,7 @@ jobs:
             echo "Options -Indexes" >> "$ML_PATH/.htaccess"
             echo "DirectoryIndex disabled" >> "$ML_PATH/.htaccess"
             echo '<FilesMatch "^\.env|^\.git">' >> "$ML_PATH/.htaccess"
-            echo "    Order allow,deny" >> "$ML_PATH/.htaccess"
-            echo "    Deny from all" >> "$ML_PATH/.htaccess"
+            echo "    Require all denied" >> "$ML_PATH/.htaccess"
             echo "</FilesMatch>" >> "$ML_PATH/.htaccess"
           fi
 
@@ -192,31 +197,26 @@ jobs:
           echo "ML Service deployed successfully with pure build artifacts and preserved .htaccess"
           REMOTE_SCRIPT
 
-          SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -o ConnectionAttempts=5 -o ServerAliveInterval=15 -o ServerAliveCountMax=3"
-          for i in 1 2 3; do
-            echo "Deploy attempt $i of 3 on port ${{ env.SSH_PORT }}..."
-            if sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh -p "${{ env.SSH_PORT }}" $SSH_OPTS \
-              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "bash -l" < deploy-ml-remote.sh; then
-              echo "Deploy succeeded."
-              rm -f deploy-ml-remote.sh
-              exit 0
-            fi
-            echo "Deploy attempt $i failed. Retrying in 5 seconds..."
-            sleep 5
-          done
+          SSH_OPTS=(
+            -i "$HOME/.ssh/deploy_key"
+            -o IdentitiesOnly=yes
+            -o StrictHostKeyChecking=yes
+            -o UserKnownHostsFile="$HOME/.ssh/known_hosts"
+            -o ConnectTimeout=30
+            -o ServerAliveInterval=15
+            -o ServerAliveCountMax=3
+          )
+          ssh -p "${{ env.SSH_PORT }}" "${SSH_OPTS[@]}" \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "bash -l" < deploy-ml-remote.sh
           rm -f deploy-ml-remote.sh
-          echo "Deploy failed after 3 attempts."
-          exit 255
 
       - name: Health check ML Service
+        env:
+          ML_URL: ${{ secrets.ML_URL }}
         run: |
+          test -n "$ML_URL" || { echo "::error::ML_URL secret not configured"; exit 1; }
           sleep 10
-          if [ -n "${{ secrets.ML_URL }}" ]; then
-            curl --fail --silent --max-time 10 ${{ secrets.ML_URL }}/ || echo "ML health check skipped"
-          else
-            echo "ML_URL secret not configured. Health check skipped."
-          fi
-        continue-on-error: true
+          curl --fail --show-error --silent --max-time 20 "$ML_URL/"
 
   summary:
     name: ML Deployment Summary
