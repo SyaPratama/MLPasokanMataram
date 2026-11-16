@@ -104,5 +104,7 @@ Seluruh model horizon langsung dilatih ulang menggunakan fitur lag deret waktu, 
 
 ## 7. Pipeline Otomatisasi GitHub Actions (CI/CD)
 
-- `.github/workflows/ci.yml`: Menjalankan suite pengetesan unit `pytest` dan validasi ambang batas akurasi model otomatis (hanya pada branch `main`).
-- `.github/workflows/docker.yml`: Membangun dan memverifikasi container image `pasokmataram-ml-service` (hanya pada branch `main`).
+- `.github/workflows/ci.yml`: Menjalankan suite `pytest` pada branch `main` dan pull request.
+- `.github/workflows/docker.yml`: Membangun dan memverifikasi image `pasokmataram-ml-service` pada branch `main` dan pull request.
+- `.github/workflows/deploy.yml`: Deployment produksi manual melalui `workflow_dispatch` pada branch `main`.
+- cPanel memakai application root `api-predict`, startup file `passenger_wsgi.py`, dan entry point `application`. Adapter `a2wsgi` dibuat setelah Passenger melakukan fork agar event-loop thread hidup di worker.

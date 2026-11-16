@@ -4,11 +4,56 @@ Verifies all CORE_COMMODITIES forecasting across the expanded food ecosystem and
 """
 
 import json
+import multiprocessing
 from pathlib import Path
+from wsgiref.util import setup_testing_defaults
+
+import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
 from app.services.forecast import ForecastService, CORE_COMMODITIES
+
+
+def _call_preforked_passenger(connection):
+    import passenger_wsgi
+
+    environ = {}
+    setup_testing_defaults(environ)
+    response = {}
+
+    def start_response(status, _headers, _exc_info=None):
+        response["status"] = status
+
+    body = b"".join(passenger_wsgi.application(environ, start_response))
+    connection.send((response["status"], body))
+    connection.close()
+
+
+def test_passenger_wsgi_serves_after_prefork():
+    if "fork" not in multiprocessing.get_all_start_methods():
+        pytest.skip("requires POSIX prefork semantics")
+
+    import passenger_wsgi  # noqa: F401
+
+    context = multiprocessing.get_context("fork")
+    parent_connection, child_connection = context.Pipe(duplex=False)
+    process = context.Process(target=_call_preforked_passenger, args=(child_connection,))
+    process.start()
+    child_connection.close()
+
+    if not parent_connection.poll(15):
+        process.terminate()
+        process.join(5)
+        pytest.fail("Passenger WSGI request hung after prefork")
+
+    status, body = parent_connection.recv()
+    parent_connection.close()
+    process.join(5)
+
+    assert process.exitcode == 0
+    assert status == "200 OK"
+    assert json.loads(body)["status"] == "online"
 
 
 def test_forecast_all_core_commodities():
